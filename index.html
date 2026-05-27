@@ -214,6 +214,7 @@
     .card-container {
       perspective: 1200px;
       margin-bottom: 20px;
+      touch-action: none;
     }
     .card {
       width: 100%;
@@ -658,6 +659,413 @@
       .card-term { font-size: 20px; }
       .card-term.long-term { font-size: 14px; }
     }
+
+    /* ---- Anatomy / Diagram deck ---- */
+    .anatomy-toolbar {
+      display: none;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+    .anatomy-toolbar.show { display: flex; }
+
+    .anatomy-empty {
+      text-align: center;
+      padding: 48px 20px;
+    }
+    .anatomy-empty .emoji { font-size: 48px; margin-bottom: 14px; }
+    .anatomy-empty h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .anatomy-empty p { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin-bottom: 22px; max-width: 360px; margin-left: auto; margin-right: auto; }
+
+    .diagram-view { margin-bottom: 20px; }
+    .diagram-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .diagram-titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .diagram-cat {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.8;
+    }
+    .diagram-title { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+
+    .mode-toggle {
+      display: flex;
+      gap: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+    }
+    .mode-toggle button {
+      padding: 7px 14px;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 7px;
+      transition: all 0.15s;
+    }
+    .mode-toggle button.active { background: var(--accent); color: #fff; }
+
+    .diagram-stage {
+      position: relative;
+      width: 100%;
+      background: #0b0d13;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      line-height: 0;
+    }
+    .diagram-stage img { width: 100%; height: auto; display: block; user-select: none; -webkit-user-drag: none; }
+
+    .pin {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 2;
+      cursor: default;
+    }
+    .pin-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(255,255,255,0.85);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.5);
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .pin-dot.correct { background: var(--correct); }
+    .pin-dot.incorrect { background: var(--incorrect); }
+    .pin-dot.selected { box-shadow: 0 0 0 3px var(--accent-glow), 0 1px 6px rgba(0,0,0,0.5); }
+    .pin.clickable .pin-dot { cursor: pointer; }
+    .pin-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      background: rgba(15,17,23,0.85);
+      padding: 3px 7px;
+      border-radius: 6px;
+      white-space: nowrap;
+      border: 1px solid var(--border);
+      line-height: 1.2;
+    }
+    .pin-label.correct { color: var(--correct); border-color: rgba(74,222,128,0.4); }
+    .pin-label.incorrect { color: var(--incorrect); border-color: rgba(248,113,113,0.4); }
+
+    .diagram-panel { margin-top: 16px; }
+    .panel-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+
+    .word-bank { display: flex; flex-wrap: wrap; gap: 8px; }
+    .word-chip {
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .word-chip:hover { border-color: var(--accent); }
+    .word-chip:active { transform: scale(0.95); }
+    .word-chip.used { opacity: 0.35; pointer-events: none; text-decoration: line-through; }
+
+    .type-rows { display: flex; flex-direction: column; gap: 8px; }
+    .type-row { display: flex; align-items: center; gap: 10px; }
+    .type-row .num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .type-row input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+    .type-row input:focus { outline: none; border-color: var(--accent); }
+    .type-row input.correct { border-color: var(--correct); }
+    .type-row input.incorrect { border-color: var(--incorrect); }
+    .type-row .answer { font-size: 12px; color: var(--correct); font-weight: 600; min-width: 0; }
+    .type-row .answer.ok { color: var(--correct); }
+    .type-row .answer.miss { color: var(--text-muted); font-weight: 500; }
+
+    .legend { display: flex; flex-direction: column; gap: 6px; }
+    .legend-item {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .legend-item .num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .diagram-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .quiz-score {
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 14px;
+    }
+    .quiz-score.good { color: var(--correct); }
+    .quiz-score.mid { color: var(--almost); }
+    .quiz-score.bad { color: var(--incorrect); }
+
+    /* ---- Diagram authoring modal ---- */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; }
+    .field input[type="text"], .field select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+    .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+    .file-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .author-stage {
+      position: relative;
+      width: 100%;
+      background: #0b0d13;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      min-height: 80px;
+      line-height: 0;
+    }
+    .author-stage img { width: 100%; height: auto; display: block; cursor: crosshair; }
+    .author-stage.empty::after {
+      content: "Upload an image, then click on it to drop labeled pins";
+      display: block;
+      padding: 30px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .pin-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .pin-list-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+    .pin-list-item .num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .pin-list-item .lbl { flex: 1; min-width: 0; }
+    .pin-list-item button {
+      background: none; border: none; color: var(--incorrect);
+      cursor: pointer; font-size: 16px; padding: 0 4px; line-height: 1;
+    }
+
+    .pin-prompt {
+      position: absolute;
+      transform: translate(-50%, calc(-100% - 12px));
+      z-index: 5;
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 5px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+    .pin-prompt input {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); font-family: inherit; font-size: 13px; padding: 6px 8px; width: 150px;
+    }
+    .pin-prompt input:focus { outline: none; border-color: var(--accent); }
+    .pin-prompt button {
+      background: var(--accent); color: #fff; border: none; border-radius: 6px;
+      padding: 0 10px; font-weight: 700; cursor: pointer; font-size: 14px;
+    }
+
+    .manage-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .manage-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 8px 12px; font-size: 13px;
+    }
+    .manage-item .meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .manage-item .meta .t { font-weight: 600; }
+    .manage-item .meta .c { font-size: 11px; color: var(--text-muted); }
+    .manage-item .ops { display: flex; gap: 6px; flex-shrink: 0; }
+    .manage-item .ops button {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-dim); cursor: pointer; font-size: 12px; padding: 5px 9px; font-family: inherit;
+    }
+    .manage-item .ops button.del { color: var(--incorrect); border-color: rgba(248,113,113,0.3); }
+
+    /* ---- Figures gallery ---- */
+    .gallery-group { margin-bottom: 28px; }
+    .gallery-head {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .gallery-cell {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .gallery-cell:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .gallery-cell:active { transform: scale(0.98); }
+    .gallery-cell img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: contain;
+      background: #fff;
+      display: block;
+    }
+    .gallery-cap {
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    /* ---- Lightbox ---- */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 300;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox.open { display: flex; }
+    .lb-stage {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 56px 16px 8px;
+    }
+    .lb-img {
+      max-width: 96vw;
+      max-height: 84vh;
+      object-fit: contain;
+      cursor: zoom-in;
+      background: #fff;
+      border-radius: 6px;
+    }
+    .lb-stage.zoomed { align-items: flex-start; justify-content: flex-start; }
+    .lb-stage.zoomed .lb-img {
+      max-width: none;
+      max-height: none;
+      width: auto;
+      cursor: zoom-out;
+    }
+    .lb-caption {
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 16px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      text-align: center;
+      max-width: 90vw;
+    }
+    .lb-btn {
+      position: fixed;
+      z-index: 310;
+      background: rgba(30,33,48,0.7);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      font-size: 22px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .lb-btn:hover { background: var(--surface-hover); border-color: var(--accent); }
+    .lb-close { top: calc(14px + env(safe-area-inset-top, 0px)); right: 14px; }
+    .lb-nav { top: 50%; transform: translateY(-50%); }
+    .lb-prev { left: 12px; }
+    .lb-next { right: 12px; }
+    @media (max-width: 600px) {
+      .lb-nav { top: auto; bottom: calc(60px + env(safe-area-inset-bottom, 0px)); transform: none; }
+      .lb-prev { left: 16px; }
+      .lb-next { right: 16px; }
+    }
   </style>
 </head>
 <body>
@@ -669,8 +1077,10 @@
     </div>
 
     <select class="deck-select" id="deckSelect">
-      <option value="language">Language</option>
+      <option value="language">Words</option>
       <option value="concepts">Concepts</option>
+      <option value="anatomy">Diagrams</option>
+      <option value="figures">Figures</option>
     </select>
 
     <div class="header-actions">
@@ -692,7 +1102,7 @@
       <div class="stat-card"><div class="stat-value red" id="statIncorrect">0</div><div class="stat-label">Incorrect</div></div>
     </div>
 
-    <div class="progress-section">
+    <div class="progress-section" id="progressSection">
       <div class="progress-stats">
         <span class="progress-label" id="progressLabel">Card 1 of 37</span>
         <span class="progress-count"><strong id="masteredCount">0</strong> mastered</span>
@@ -703,6 +1113,39 @@
     </div>
 
     <div class="chapter-filter" id="chapterFilter"></div>
+
+    <div class="anatomy-toolbar" id="anatomyToolbar">
+      <button class="btn btn-accent" id="addDiagramBtn">+ Add Diagram</button>
+    </div>
+
+    <div class="anatomy-empty" id="anatomyEmpty" style="display: none;">
+      <div class="emoji">&#129504;</div>
+      <h2>No diagrams yet</h2>
+      <p>Add an anatomical diagram, then click on the image to drop labeled pins. Study them as flashcards or quiz yourself by matching or typing the labels.</p>
+      <button class="btn btn-accent" id="addDiagramEmptyBtn">+ Add your first diagram</button>
+    </div>
+
+    <div class="diagram-view" id="diagramView" style="display: none;">
+      <div class="diagram-head">
+        <div class="diagram-titles">
+          <span class="diagram-cat" id="diagramCat"></span>
+          <span class="diagram-title" id="diagramTitle"></span>
+        </div>
+        <div class="mode-toggle" id="diagramModeToggle">
+          <button data-mode="study">Study</button>
+          <button data-mode="recall">Quiz</button>
+          <button data-mode="match">Match</button>
+          <button data-mode="type">Type</button>
+        </div>
+      </div>
+      <div class="diagram-stage" id="diagramStage">
+        <img id="diagramImg" alt="">
+        <div id="diagramPins"></div>
+      </div>
+      <div class="diagram-panel" id="diagramPanel"></div>
+      <div class="diagram-actions" id="diagramActions"></div>
+      <div class="quiz-score" id="quizScore" style="display: none;"></div>
+    </div>
 
     <div class="card-container animate-in" id="cardContainer">
       <div class="card" id="flashcard">
@@ -753,6 +1196,19 @@
       </div>
       <div class="mastered-list" id="masteredList"></div>
     </div>
+
+    <div class="gallery-view" id="galleryView" style="display: none;"></div>
+  </div>
+
+  <!-- Figure lightbox -->
+  <div class="lightbox" id="lightbox">
+    <button class="lb-btn lb-close" id="lbClose" title="Close">&times;</button>
+    <button class="lb-btn lb-nav lb-prev" id="lbPrev" title="Previous">&#10094;</button>
+    <button class="lb-btn lb-nav lb-next" id="lbNext" title="Next">&#10095;</button>
+    <div class="lb-stage" id="lbStage">
+      <img class="lb-img" id="lbImg" alt="">
+    </div>
+    <div class="lb-caption" id="lbCaption"></div>
   </div>
 
   <!-- Edit Modal -->
@@ -777,6 +1233,50 @@
     </div>
   </div>
 
+  <!-- Add / Edit Diagram Modal -->
+  <div class="modal-overlay" id="diagramModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="diagramModalTitle">Add Diagram</h3>
+        <button class="modal-close" id="closeDiagramModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="diagTitleInput">Title</label>
+          <input type="text" id="diagTitleInput" placeholder="e.g. The Synapse" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="diagCatInput">Category</label>
+          <input type="text" id="diagCatInput" list="diagCatList" placeholder="e.g. Synapse" autocomplete="off">
+          <datalist id="diagCatList"></datalist>
+        </div>
+        <div class="field">
+          <label>Image</label>
+          <div class="file-row">
+            <input type="file" id="diagFileInput" accept="image/*">
+          </div>
+        </div>
+        <div class="field">
+          <label>Pins <span style="font-weight:400;color:var(--text-muted);">— click on the image to add a labeled pin</span></label>
+          <div class="author-stage empty" id="authorStage">
+            <img id="authorImg" alt="" style="display:none;">
+            <div id="authorPins"></div>
+          </div>
+          <div class="pin-list" id="authorPinList"></div>
+        </div>
+
+        <div class="field" id="manageWrap" style="display:none;">
+          <label>Existing diagrams</label>
+          <div class="manage-list" id="manageList"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="cancelDiagram">Cancel</button>
+        <button class="btn btn-accent" id="saveDiagram">Save Diagram</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ---- State ----
     let allCards = [];
@@ -788,6 +1288,22 @@
     let mastered = [];
     let activeChapter = 'All';
     let activeDeck = 'language';
+
+    // ---- Anatomy / diagram deck state ----
+    let diagramMode = 'study';            // 'study' | 'match' | 'type'
+    let quizAssign = {};                  // pinIndex -> assigned label (match mode)
+    let quizSelectedPin = null;           // currently selected pin index (match mode)
+    let quizChecked = false;              // whether current quiz has been graded
+    let studyRevealed = false;            // study mode: labels shown or hidden
+    let quizResult = null;                // { correct, total } after grading
+    let quizBank = null;                  // shuffled label list for match mode
+    let recallResults = null;             // recall (quiz) mode grading result
+    let justSwiped = false;               // suppress flip after a swipe gesture
+    const ANATOMY_CATEGORIES = ['Synapse', 'Cells & Glia', 'Brain Overall'];
+    // Authoring scratch state
+    let authorImgData = null;             // data URL of uploaded image
+    let authorPins = [];                  // [{label, x, y}]
+    let authorEditTerm = null;            // term of diagram being edited (null = new)
 
     // =====================================================
     //  LANGUAGE DECK (morphology cards + auto-gen morphemes)
@@ -896,6 +1412,61 @@
       {"term":"A patient takes an atypical antipsychotic (like Clozapine). Why does it cause fewer movement side effects (Tardive Dyskinesia) than older drugs?","definition":"Atypical antipsychotics strongly antagonise Serotonin (5-HT2) receptors and have a lower affinity for dopamine D2 receptors in the basal ganglia compared to typical neuroleptics.","chapter":"Chapters 11, 12 & 14"}
     ];
 
+    // =====================================================
+    //  FIGURES (exam diagrams committed to the repo)
+    //  Used by both the Figures gallery and the Anatomy deck.
+    // =====================================================
+    const FIGURES = [
+      { file: 'f-1-10.png', blank: 'f-1-10-blank.png', title: 'Fig 1.10 — Motor Neuron', cat: 'Cells & Glia',
+        labels: ['Dendrite', 'Soma (cell body)', 'Nucleus', 'Axon hillock', 'Myelin sheath', 'Axon', 'Dendritic spines', 'Presynaptic terminals'] },
+      { file: 'f-1-15.png', blank: 'f-1-15-blank.png', title: 'Fig 1.15 — Glia Cells', cat: 'Cells & Glia',
+        labels: ['Astrocyte', 'Oligodendrocyte', 'Schwann cell', 'Microglia', 'Radial glia', 'Myelin sheath', 'Capillary', 'Migrating neuron'] },
+      { file: 'f-2-10.png', blank: 'f-2-10-blank.png', title: 'Fig 2.10 — Transmission at a Synapse', cat: 'Synapse',
+        labels: ['Vesicle', 'Presynaptic terminal', 'Synaptic cleft', 'Postsynaptic neuron', 'Neurotransmitter', 'Receptor', 'Transporter protein', 'Glia cell'] },
+      { file: 'f-3-2.png', blank: 'f-3-2-blank.png', title: 'Fig 3.2 — Anatomical Directions & Planes', cat: 'Brain Overall',
+        labels: ['Sagittal plane', 'Coronal plane', 'Horizontal plane', 'Dorsal', 'Ventral', 'Anterior', 'Posterior', 'Medial', 'Lateral'] },
+      { file: 'f-3-8.png', blank: 'f-3-8-blank.png', title: 'Fig 3.8 — The Human Brainstem', cat: 'Brain Overall',
+        labels: ['Thalamus', 'Pineal gland', 'Superior colliculus', 'Inferior colliculus', 'Tectum', 'Tegmentum', 'Pons', 'Medulla', 'Midbrain'] },
+      { file: 'f-3-12.png', blank: 'f-3-12-blank.png', title: 'Fig 3.12 — Subcortical Forebrain', cat: 'Brain Overall',
+        labels: ['Cingulate gyrus', 'Thalamus', 'Hypothalamus', 'Mamillary body', 'Hippocampus', 'Amygdala', 'Olfactory bulb'] },
+      { file: 'f-3-17.png', blank: 'f-3-17-blank.png', title: 'Fig 3.17 — The Cerebral Ventricles', cat: 'Brain Overall',
+        labels: ['Lateral ventricles', 'Third ventricle', 'Fourth ventricle', 'Cerebral aqueduct', 'Central canal of spinal cord', 'Thalamus'] },
+      { file: 'f-3-22.png', blank: 'f-3-22-blank.png', title: 'Fig 3.22 — Cerebral Cortex (Lobes)', cat: 'Brain Overall',
+        labels: ['Frontal lobe', 'Parietal lobe', 'Temporal lobe', 'Occipital lobe', 'Central sulcus', 'Precentral gyrus (motor cortex)', 'Postcentral gyrus (somatosensory cortex)'] }
+    ];
+
+    // =====================================================
+    //  ANATOMY DECK (labeled diagrams)
+    //  Each item: { term, type:'diagram', chapter, img, labels:[names],
+    //               pins: [ { label, x, y } ] }  (x,y are 0..1 fractions)
+    //  Seeded from the repo figures; users can add their own via the
+    //  "+ Add Diagram" tool (uploaded images + click-to-place pins).
+    // =====================================================
+    const DEFAULT_ANATOMY = FIGURES.map(f => ({
+      term: f.title, type: 'diagram', chapter: f.cat,
+      img: f.file, blankImg: f.blank || null, labels: f.labels, pins: f.pins || []
+    }));
+
+    // Refresh static figure content (image, blank, labels) on stored anatomy
+    // cards so new fields reach returning visitors, while keeping user-added
+    // diagrams and any pins they placed on the seed figures.
+    function mergeAnatomy(stored, seed) {
+      const bySeed = {};
+      seed.forEach(s => { bySeed[s.term] = s; });
+      const seen = {};
+      const merged = stored.map(c => {
+        const s = bySeed[c.term];
+        seen[c.term] = true;
+        if (!s) return c;
+        return Object.assign({}, c, {
+          img: s.img, blankImg: s.blankImg, labels: s.labels, chapter: s.chapter,
+          pins: (c.pins && c.pins.length) ? c.pins : s.pins
+        });
+      });
+      seed.forEach(s => { if (!seen[s.term]) merged.push(s); });
+      return merged;
+    }
+
     // ---- Chapter short names for morphograph categories ----
     const MORPH_CHAPTER_NAMES = {
       'Chapters 1 & 2': 'Ch 1&2 Morphographs',
@@ -934,13 +1505,23 @@
 
     // ---- Get the default cards for current deck ----
     function getDefaultsForDeck() {
-      return activeDeck === 'language' ? DEFAULT_LANGUAGE : DEFAULT_CONCEPTS;
+      if (activeDeck === 'language') return DEFAULT_LANGUAGE;
+      if (activeDeck === 'anatomy') return DEFAULT_ANATOMY;
+      if (activeDeck === 'figures') return [];
+      return DEFAULT_CONCEPTS;
     }
 
     // ---- Init / Switch ----
     function init(deck) {
       if (deck) activeDeck = deck;
       document.getElementById('deckSelect').value = activeDeck;
+
+      if (activeDeck === 'figures') {
+        showFiguresLayout(true);
+        renderGallery();
+        return;
+      }
+      showFiguresLayout(false);
 
       defaultCards = getDefaultsForDeck();
 
@@ -952,6 +1533,8 @@
           const hasNewFormat = parsed.some(c => c.parts);
           termCards = hasNewFormat ? parsed : [...defaultCards];
           if (!hasNewFormat) localStorage.removeItem(cardsKey());
+        } else if (activeDeck === 'anatomy') {
+          termCards = mergeAnatomy(parsed, defaultCards);
         } else {
           termCards = parsed;
         }
@@ -1056,8 +1639,27 @@
       const card = document.getElementById('flashcard');
       card.classList.remove('flipped');
 
+      const isAnatomy = activeDeck === 'anatomy';
+      document.getElementById('anatomyToolbar').classList.toggle('show', isAnatomy);
+      document.getElementById('editBtn').style.display = isAnatomy ? 'none' : '';
+
+      // Empty anatomy deck → show prompt to add the first diagram
+      if (isAnatomy && allCards.length === 0) {
+        document.getElementById('cardContainer').style.display = 'none';
+        document.getElementById('diagramView').style.display = 'none';
+        document.getElementById('actions').style.display = 'none';
+        document.getElementById('keyboardHint').style.display = 'none';
+        document.getElementById('completedState').style.display = 'none';
+        document.getElementById('anatomyEmpty').style.display = 'block';
+        updateProgress();
+        renderMastered();
+        return;
+      }
+      document.getElementById('anatomyEmpty').style.display = 'none';
+
       if (pile.length === 0) {
         document.getElementById('cardContainer').style.display = 'none';
+        document.getElementById('diagramView').style.display = 'none';
         document.getElementById('actions').style.display = 'none';
         document.getElementById('keyboardHint').style.display = 'none';
         document.getElementById('completedState').style.display = 'block';
@@ -1065,13 +1667,26 @@
         renderMastered();
         return;
       }
-
-      document.getElementById('cardContainer').style.display = 'block';
-      document.getElementById('actions').style.display = 'flex';
-      document.getElementById('keyboardHint').style.display = 'block';
       document.getElementById('completedState').style.display = 'none';
 
       const current = pile[currentIndex % pile.length];
+
+      // Diagram cards get their own dedicated view
+      if (current.type === 'diagram') {
+        document.getElementById('cardContainer').style.display = 'none';
+        document.getElementById('actions').style.display = 'none';
+        document.getElementById('keyboardHint').style.display = 'none';
+        document.getElementById('diagramView').style.display = 'block';
+        renderDiagram(current);
+        updateProgress();
+        renderMastered();
+        return;
+      }
+
+      document.getElementById('diagramView').style.display = 'none';
+      document.getElementById('cardContainer').style.display = 'block';
+      document.getElementById('actions').style.display = 'flex';
+      document.getElementById('keyboardHint').style.display = 'block';
       const termEl = document.getElementById('cardTerm');
       termEl.textContent = current.term;
       // Use smaller font for long terms (like scenario questions)
@@ -1125,6 +1740,452 @@
       void container.offsetWidth;
       container.classList.add('animate-in');
     }
+
+    // =====================================================
+    //  DIAGRAM RENDERING + QUIZZING
+    // =====================================================
+    function currentDiagram() {
+      if (pile.length === 0) return null;
+      return pile[currentIndex % pile.length];
+    }
+
+    function setDiagramMode(mode) {
+      diagramMode = mode;
+      const current = currentDiagram();
+      if (current && current.type === 'diagram') renderDiagram(current);
+    }
+
+    function renderDiagram(current) {
+      quizAssign = {};
+      quizSelectedPin = null;
+      quizChecked = false;
+      studyRevealed = false;
+      quizResult = null;
+      recallResults = null;
+      quizBank = shuffledLabels(current.pins || []);
+
+      document.getElementById('diagramCat').textContent = current.chapter || '';
+      document.getElementById('diagramTitle').textContent = current.term;
+
+      const hasPins = !!(current.pins && current.pins.length);
+      const hasRecall = !!(current.blankImg && current.labels && current.labels.length);
+      if (diagramMode === 'recall' && !hasRecall) diagramMode = 'study';
+      if ((diagramMode === 'match' || diagramMode === 'type') && !hasPins) diagramMode = 'study';
+      document.querySelectorAll('#diagramModeToggle button').forEach(b => {
+        const m = b.dataset.mode;
+        const show = m === 'study' || (m === 'recall' && hasRecall) || ((m === 'match' || m === 'type') && hasPins);
+        b.style.display = show ? '' : 'none';
+        b.classList.toggle('active', m === diagramMode);
+      });
+
+      const src = (diagramMode === 'recall' && current.blankImg) ? current.blankImg : (current.img || '');
+      document.getElementById('diagramImg').src = src;
+
+      renderDiagramMode(current);
+    }
+
+    function renderDiagramMode(current) {
+      const pins = current.pins || [];
+      document.getElementById('quizScore').style.display = 'none';
+      if (diagramMode === 'study') renderStudyMode(current, pins);
+      else if (diagramMode === 'match') renderMatchMode(current, pins);
+      else if (diagramMode === 'recall') renderRecallMode(current);
+      else renderTypeMode(current, pins);
+    }
+
+    function buildPins(pins, builder) {
+      const wrap = document.getElementById('diagramPins');
+      wrap.innerHTML = '';
+      pins.forEach((p, i) => {
+        const pin = document.createElement('div');
+        pin.className = 'pin';
+        pin.style.left = (p.x * 100) + '%';
+        pin.style.top = (p.y * 100) + '%';
+        builder(pin, p, i);
+        wrap.appendChild(pin);
+      });
+    }
+
+    function renderStudyMode(current, pins) {
+      buildPins(pins, (pin, p, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'pin-dot';
+        dot.textContent = i + 1;
+        pin.appendChild(dot);
+        if (studyRevealed) {
+          const lbl = document.createElement('div');
+          lbl.className = 'pin-label';
+          lbl.textContent = p.label;
+          pin.appendChild(lbl);
+        }
+      });
+
+      const panel = document.getElementById('diagramPanel');
+      const revealItems = pins.length ? pins.map(p => p.label) : (current.labels || []);
+      if (revealItems.length === 0) {
+        panel.innerHTML = '<div class="panel-hint">This diagram has no labels yet. Use Edit to add pins.</div>';
+      } else if (studyRevealed) {
+        let html = '<div class="panel-hint">Key structures to know:</div><div class="legend">';
+        revealItems.forEach((label, i) => {
+          html += '<div class="legend-item"><span class="num">' + (i + 1) + '</span><span>' + escapeHtml(label) + '</span></div>';
+        });
+        html += '</div>';
+        panel.innerHTML = html;
+      } else {
+        const hint = pins.length
+          ? 'Try to name each numbered part, then reveal the labels.'
+          : 'Study the figure, then reveal the key structures to check yourself.';
+        panel.innerHTML = '<div class="panel-hint">' + hint + '</div>';
+      }
+
+      const actions = document.getElementById('diagramActions');
+      actions.innerHTML = '';
+      if (!studyRevealed) {
+        actions.appendChild(makeBtn(pins.length ? 'Reveal Labels' : 'Reveal Key Structures', 'btn btn-accent', () => {
+          studyRevealed = true;
+          renderDiagramMode(current);
+        }));
+      } else {
+        actions.appendChild(makeBtn('✗ Again', 'action-btn action-incorrect', () => answer('incorrect')));
+        actions.appendChild(makeBtn('≈ Almost', 'action-btn action-almost', () => answer('almost')));
+        actions.appendChild(makeBtn('✓ Got it', 'action-btn action-correct', () => answer('correct')));
+      }
+    }
+
+    function renderMatchMode(current, pins) {
+      if (pins.length === 0) { renderNoPins(); return; }
+
+      buildPins(pins, (pin, p, i) => {
+        pin.classList.add('clickable');
+        const dot = document.createElement('div');
+        dot.className = 'pin-dot';
+        if (quizSelectedPin === i) dot.classList.add('selected');
+        if (quizChecked) dot.classList.add(quizAssign[i] === p.label ? 'correct' : 'incorrect');
+        dot.textContent = i + 1;
+        dot.onclick = () => {
+          if (quizChecked) return;
+          quizSelectedPin = (quizSelectedPin === i ? null : i);
+          renderDiagramMode(current);
+        };
+        pin.appendChild(dot);
+        if (quizAssign[i] != null) {
+          const lbl = document.createElement('div');
+          lbl.className = 'pin-label';
+          if (quizChecked) lbl.classList.add(quizAssign[i] === p.label ? 'correct' : 'incorrect');
+          lbl.textContent = quizAssign[i];
+          pin.appendChild(lbl);
+        }
+      });
+
+      const panel = document.getElementById('diagramPanel');
+      const assigned = Object.values(quizAssign);
+      let html = '<div class="panel-hint">Tap a numbered pin, then tap its label. Tap a pin and pick again to change it.</div>';
+      html += '<div class="word-bank">';
+      quizBank.forEach(label => {
+        const used = assigned.includes(label);
+        html += '<button class="word-chip' + (used ? ' used' : '') + '" data-label="' + escapeAttr(label) + '">' + escapeHtml(label) + '</button>';
+      });
+      html += '</div>';
+      panel.innerHTML = html;
+
+      panel.querySelectorAll('.word-chip').forEach(chip => {
+        chip.onclick = () => {
+          if (quizChecked || quizSelectedPin == null) return;
+          const label = chip.dataset.label;
+          Object.keys(quizAssign).forEach(k => { if (quizAssign[k] === label) delete quizAssign[k]; });
+          quizAssign[quizSelectedPin] = label;
+          quizSelectedPin = nextUnassignedPin(pins, quizSelectedPin);
+          renderDiagramMode(current);
+        };
+      });
+
+      renderQuizActions(current, pins);
+    }
+
+    function renderTypeMode(current, pins) {
+      if (pins.length === 0) { renderNoPins(); return; }
+
+      buildPins(pins, (pin, p, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'pin-dot';
+        dot.textContent = i + 1;
+        if (quizChecked) dot.classList.add(isTypeCorrect(i, p) ? 'correct' : 'incorrect');
+        pin.appendChild(dot);
+      });
+
+      const panel = document.getElementById('diagramPanel');
+      let html = '<div class="panel-hint">Type the label for each numbered pin, then check.</div><div class="type-rows">';
+      pins.forEach((p, i) => {
+        const val = quizAssign[i] != null ? escapeAttr(quizAssign[i]) : '';
+        let cls = '', answerHtml = '';
+        if (quizChecked) {
+          const ok = isTypeCorrect(i, p);
+          cls = ok ? 'correct' : 'incorrect';
+          if (!ok) answerHtml = '<span class="answer">' + escapeHtml(p.label) + '</span>';
+        }
+        html += '<div class="type-row"><span class="num">' + (i + 1) + '</span>' +
+          '<input type="text" data-idx="' + i + '" value="' + val + '" class="' + cls + '" ' +
+          (quizChecked ? 'disabled ' : '') + 'autocomplete="off" autocapitalize="off" spellcheck="false">' +
+          answerHtml + '</div>';
+      });
+      html += '</div>';
+      panel.innerHTML = html;
+
+      panel.querySelectorAll('.type-row input').forEach(inp => {
+        inp.oninput = () => { quizAssign[+inp.dataset.idx] = inp.value; };
+      });
+
+      renderQuizActions(current, pins);
+    }
+
+    function renderQuizActions(current, pins) {
+      const actions = document.getElementById('diagramActions');
+      actions.innerHTML = '';
+      if (!quizChecked) {
+        actions.appendChild(makeBtn('Check Answers', 'btn btn-accent', () => gradeQuiz(current, pins)));
+      } else {
+        actions.appendChild(makeBtn('Try Again', 'btn', () => {
+          quizAssign = {}; quizSelectedPin = null; quizChecked = false; quizResult = null;
+          renderDiagramMode(current);
+        }));
+        actions.appendChild(makeBtn('Next →', 'btn btn-accent', () => {
+          const t = quizResult && quizResult.total ? quizResult.correct / quizResult.total : 0;
+          answer(t === 1 ? 'correct' : (t >= 0.5 ? 'almost' : 'incorrect'));
+        }));
+      }
+    }
+
+    function gradeQuiz(current, pins) {
+      quizChecked = true;
+      let correct = 0;
+      pins.forEach((p, i) => {
+        const ok = diagramMode === 'match' ? quizAssign[i] === p.label : isTypeCorrect(i, p);
+        if (ok) correct++;
+      });
+      quizResult = { correct: correct, total: pins.length };
+      renderDiagramMode(current);
+      const score = document.getElementById('quizScore');
+      score.style.display = 'block';
+      const pct = pins.length ? correct / pins.length : 0;
+      score.className = 'quiz-score ' + (pct === 1 ? 'good' : (pct >= 0.5 ? 'mid' : 'bad'));
+      score.textContent = correct + ' / ' + pins.length + ' correct';
+    }
+
+    function isTypeCorrect(i, p) { return normLabel(quizAssign[i] || '') === normLabel(p.label); }
+    function normLabel(s) {
+      return String(s).toLowerCase().trim().replace(/\s+/g, ' ').replace(/[.,;:!?’'"()]/g, '');
+    }
+
+    // ---- Recall (Quiz) mode: blank image + free-recall typing, graded as a
+    //      set against the figure's labels (order-independent). ----
+    function renderRecallMode(current) {
+      document.getElementById('diagramPins').innerHTML = '';
+      const labels = current.labels || [];
+      const panel = document.getElementById('diagramPanel');
+      let html = '<div class="panel-hint">Name every labeled structure (order doesn’t matter), then Check. Minor typos and synonyms are accepted.</div><div class="type-rows">';
+      labels.forEach((lbl, i) => {
+        const r = recallResults ? recallResults.rows[i] : null;
+        const val = quizAssign[i] != null ? escapeAttr(quizAssign[i]) : '';
+        let cls = '', extra = '';
+        if (r) {
+          if (r.status === 'correct') { cls = 'correct'; extra = '<span class="answer ok">✓ ' + escapeHtml(r.matched) + '</span>'; }
+          else { cls = 'incorrect'; extra = '<span class="answer miss">' + (r.status === 'empty' ? 'left blank' : 'not a match') + '</span>'; }
+        }
+        html += '<div class="type-row"><span class="num">' + (i + 1) + '</span>' +
+          '<input type="text" data-idx="' + i + '" value="' + val + '" class="' + cls + '" ' +
+          (recallResults ? 'disabled ' : '') + 'autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="structure name">' +
+          extra + '</div>';
+      });
+      html += '</div>';
+      if (recallResults && recallResults.missed.length) {
+        html += '<div class="panel-hint" style="margin-top:12px">Missed — review these:</div><div class="legend">';
+        recallResults.missed.forEach(l => {
+          html += '<div class="legend-item"><span class="num">•</span><span>' + escapeHtml(l) + '</span></div>';
+        });
+        html += '</div>';
+      }
+      panel.innerHTML = html;
+      panel.querySelectorAll('.type-row input').forEach(inp => {
+        inp.oninput = () => { quizAssign[+inp.dataset.idx] = inp.value; };
+      });
+
+      const actions = document.getElementById('diagramActions');
+      actions.innerHTML = '';
+      if (!recallResults) {
+        actions.appendChild(makeBtn('Check Answers', 'btn btn-accent', () => gradeRecall(current)));
+      } else {
+        actions.appendChild(makeBtn('Try Again', 'btn', () => {
+          quizAssign = {}; recallResults = null; renderDiagramMode(current);
+        }));
+        actions.appendChild(makeBtn('Next →', 'btn btn-accent', () => {
+          const t = recallResults.total ? recallResults.correct / recallResults.total : 0;
+          answer(t === 1 ? 'correct' : (t >= 0.5 ? 'almost' : 'incorrect'));
+        }));
+      }
+    }
+
+    function gradeRecall(current) {
+      const labels = current.labels || [];
+      const remaining = labels.map(l => ({ label: l, accepts: labelAccepts(l), used: false }));
+      const rows = labels.map((_, i) => {
+        const raw = (quizAssign[i] || '').trim();
+        if (!raw) return { status: 'empty' };
+        const n = normLabel(raw);
+        let hit = remaining.find(e => !e.used && e.accepts.indexOf(n) !== -1);
+        if (!hit) {
+          let best = null, bestD = Infinity;
+          remaining.forEach(e => {
+            if (e.used) return;
+            e.accepts.forEach(a => { if (closeEnough(n, a)) { const d = lev(n, a); if (d < bestD) { bestD = d; best = e; } } });
+          });
+          hit = best;
+        }
+        if (hit) { hit.used = true; return { status: 'correct', matched: hit.label }; }
+        return { status: 'wrong' };
+      });
+      const correct = rows.filter(r => r.status === 'correct').length;
+      const missed = remaining.filter(e => !e.used).map(e => e.label);
+      recallResults = { rows: rows, correct: correct, total: labels.length, missed: missed };
+      renderDiagramMode(current);
+      const score = document.getElementById('quizScore');
+      score.style.display = 'block';
+      const pct = labels.length ? correct / labels.length : 0;
+      score.className = 'quiz-score ' + (pct === 1 ? 'good' : (pct >= 0.5 ? 'mid' : 'bad'));
+      score.textContent = correct + ' / ' + labels.length + ' correct';
+    }
+
+    // Acceptable normalized forms for a label, incl. the part before a
+    // parenthetical and the part inside it (e.g. "Soma (cell body)" accepts
+    // "soma", "cell body", or the whole thing).
+    function labelAccepts(label) {
+      const forms = {};
+      const add = s => { const n = normLabel(s); if (n) forms[n] = true; };
+      add(label);
+      const m = String(label).match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+      if (m) { add(m[1]); add(m[2]); }
+      return Object.keys(forms);
+    }
+
+    // Typo tolerance: stricter for short strings to avoid conflating
+    // distinct labels.
+    function closeEnough(a, b) {
+      if (a === b) return true;
+      const len = Math.max(a.length, b.length);
+      if (len <= 3) return false;
+      const d = lev(a, b);
+      if (len <= 7) return d <= 1;
+      return d <= Math.min(3, Math.floor(len / 5));
+    }
+
+    function lev(a, b) {
+      const m = a.length, n = b.length;
+      if (!m) return n; if (!n) return m;
+      let prev = new Array(n + 1), cur = new Array(n + 1);
+      for (let j = 0; j <= n; j++) prev[j] = j;
+      for (let i = 1; i <= m; i++) {
+        cur[0] = i;
+        for (let j = 1; j <= n; j++) {
+          const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+          cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+        }
+        const t = prev; prev = cur; cur = t;
+      }
+      return prev[n];
+    }
+    function nextUnassignedPin(pins, from) {
+      for (let k = 1; k <= pins.length; k++) {
+        const idx = (from + k) % pins.length;
+        if (quizAssign[idx] == null) return idx;
+      }
+      return null;
+    }
+    function shuffledLabels(pins) {
+      const arr = pins.map(p => p.label);
+      shuffleArray(arr);
+      return arr;
+    }
+    function renderNoPins() {
+      document.getElementById('diagramPins').innerHTML = '';
+      document.getElementById('diagramPanel').innerHTML = '<div class="panel-hint">This diagram has no labels yet. Use Edit to add pins.</div>';
+      document.getElementById('diagramActions').innerHTML = '';
+    }
+    function makeBtn(text, cls, onclick) {
+      const b = document.createElement('button');
+      b.className = cls;
+      b.textContent = text;
+      b.onclick = onclick;
+      return b;
+    }
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function escapeAttr(s) {
+      return escapeHtml(s).replace(/"/g, '&quot;');
+    }
+
+    // =====================================================
+    //  FIGURES GALLERY (view-only) + LIGHTBOX
+    // =====================================================
+    function showFiguresLayout(on) {
+      const studyEls = ['statsGrid', 'progressSection', 'chapterFilter', 'anatomyToolbar',
+        'cardContainer', 'diagramView', 'actions', 'keyboardHint', 'completedState',
+        'masteredSection', 'anatomyEmpty'];
+      studyEls.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = on ? 'none' : ''; });
+      document.getElementById('editBtn').style.display = on ? 'none' : '';
+      document.getElementById('resetBtn').style.display = on ? 'none' : '';
+      document.getElementById('galleryView').style.display = on ? 'block' : 'none';
+    }
+
+    function renderGallery() {
+      const view = document.getElementById('galleryView');
+      view.innerHTML = '';
+      const cats = [];
+      FIGURES.forEach(f => { if (!cats.includes(f.cat)) cats.push(f.cat); });
+      cats.forEach(cat => {
+        const group = document.createElement('div');
+        group.className = 'gallery-group';
+        const head = document.createElement('div');
+        head.className = 'gallery-head';
+        head.textContent = cat;
+        group.appendChild(head);
+        const grid = document.createElement('div');
+        grid.className = 'gallery-grid';
+        FIGURES.forEach((f, idx) => {
+          if (f.cat !== cat) return;
+          const cell = document.createElement('button');
+          cell.className = 'gallery-cell';
+          const img = document.createElement('img');
+          img.loading = 'lazy';
+          img.src = f.file;
+          img.alt = f.title;
+          const cap = document.createElement('span');
+          cap.className = 'gallery-cap';
+          cap.textContent = f.title;
+          cell.appendChild(img);
+          cell.appendChild(cap);
+          cell.onclick = () => openLightbox(idx);
+          grid.appendChild(cell);
+        });
+        group.appendChild(grid);
+        view.appendChild(group);
+      });
+    }
+
+    let lbIndex = 0;
+    function openLightbox(i) {
+      lbIndex = i;
+      updateLightbox();
+      document.getElementById('lightbox').classList.add('open');
+    }
+    function updateLightbox() {
+      const f = FIGURES[lbIndex];
+      document.getElementById('lbStage').classList.remove('zoomed');
+      document.getElementById('lbImg').src = f.file;
+      document.getElementById('lbImg').alt = f.title;
+      document.getElementById('lbCaption').textContent = f.title;
+    }
+    function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+    function lbStep(d) { lbIndex = (lbIndex + d + FIGURES.length) % FIGURES.length; updateLightbox(); }
 
     function getFilteredAll() {
       if (activeChapter === 'All') return allCards;
@@ -1212,6 +2273,7 @@
     }
 
     function flipCard() {
+      if (justSwiped) { justSwiped = false; return; }
       document.getElementById('flashcard').classList.toggle('flipped');
     }
 
@@ -1284,6 +2346,251 @@
       document.getElementById('editArea').value = JSON.stringify(editableCards, null, 2);
     }
 
+    // =====================================================
+    //  DIAGRAM AUTHORING (upload image, place labeled pins)
+    // =====================================================
+    function openDiagramModal(editTerm) {
+      authorEditTerm = editTerm || null;
+      authorPins = [];
+      authorImgData = null;
+      closeAuthorPrompt();
+
+      const titleInput = document.getElementById('diagTitleInput');
+      const catInput = document.getElementById('diagCatInput');
+      document.getElementById('diagFileInput').value = '';
+
+      const cats = Array.from(new Set([...ANATOMY_CATEGORIES,
+        ...allCards.filter(c => c.type === 'diagram').map(c => c.chapter)]));
+      document.getElementById('diagCatList').innerHTML =
+        cats.map(c => '<option value="' + escapeAttr(c) + '"></option>').join('');
+
+      if (authorEditTerm) {
+        const card = allCards.find(c => c.term === authorEditTerm && c.type === 'diagram');
+        document.getElementById('diagramModalTitle').textContent = 'Edit Diagram';
+        titleInput.value = card.term;
+        catInput.value = card.chapter || '';
+        authorImgData = card.img || null;
+        authorPins = (card.pins || []).map(p => ({ label: p.label, x: p.x, y: p.y }));
+      } else {
+        document.getElementById('diagramModalTitle').textContent = 'Add Diagram';
+        titleInput.value = '';
+        catInput.value = '';
+      }
+
+      renderAuthorImage();
+      renderAuthorPins();
+      renderManageList();
+      document.getElementById('diagramModal').classList.add('open');
+    }
+
+    function closeDiagramModal() {
+      document.getElementById('diagramModal').classList.remove('open');
+      closeAuthorPrompt();
+    }
+
+    function renderAuthorImage() {
+      const stage = document.getElementById('authorStage');
+      const img = document.getElementById('authorImg');
+      if (authorImgData) {
+        img.src = authorImgData;
+        img.style.display = 'block';
+        stage.classList.remove('empty');
+      } else {
+        img.removeAttribute('src');
+        img.style.display = 'none';
+        stage.classList.add('empty');
+      }
+    }
+
+    function handleDiagramFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const tmp = new Image();
+        tmp.onload = () => {
+          const max = 1200;
+          let w = tmp.width, h = tmp.height;
+          if (w > max || h > max) {
+            const r = Math.min(max / w, max / h);
+            w = Math.round(w * r); h = Math.round(h * r);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(tmp, 0, 0, w, h);
+          authorImgData = canvas.toDataURL('image/jpeg', 0.72);
+          renderAuthorImage();
+        };
+        tmp.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderAuthorPins() {
+      const wrap = document.getElementById('authorPins');
+      wrap.innerHTML = '';
+      authorPins.forEach((p, i) => {
+        const pin = document.createElement('div');
+        pin.className = 'pin';
+        pin.style.left = (p.x * 100) + '%';
+        pin.style.top = (p.y * 100) + '%';
+        const dot = document.createElement('div');
+        dot.className = 'pin-dot';
+        dot.textContent = i + 1;
+        pin.appendChild(dot);
+        const lbl = document.createElement('div');
+        lbl.className = 'pin-label';
+        lbl.textContent = p.label;
+        pin.appendChild(lbl);
+        wrap.appendChild(pin);
+      });
+
+      const list = document.getElementById('authorPinList');
+      list.innerHTML = '';
+      authorPins.forEach((p, i) => {
+        const item = document.createElement('div');
+        item.className = 'pin-list-item';
+        item.innerHTML = '<span class="num">' + (i + 1) + '</span><span class="lbl">' + escapeHtml(p.label) + '</span>';
+        const del = document.createElement('button');
+        del.textContent = '✕';
+        del.onclick = () => { authorPins.splice(i, 1); renderAuthorPins(); };
+        item.appendChild(del);
+        list.appendChild(item);
+      });
+    }
+
+    function onAuthorImageClick(e) {
+      if (!authorImgData) return;
+      const img = document.getElementById('authorImg');
+      const rect = img.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = (e.clientY - rect.top) / rect.height;
+      if (x < 0 || x > 1 || y < 0 || y > 1) return;
+      openAuthorPrompt(x, y);
+    }
+
+    function openAuthorPrompt(x, y) {
+      closeAuthorPrompt();
+      const stage = document.getElementById('authorStage');
+      const prompt = document.createElement('div');
+      prompt.className = 'pin-prompt';
+      prompt.id = 'pinPrompt';
+      prompt.style.left = (x * 100) + '%';
+      prompt.style.top = (y * 100) + '%';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'Label…';
+      const ok = document.createElement('button');
+      ok.textContent = '✓';
+      const commit = () => {
+        const label = input.value.trim();
+        if (label) { authorPins.push({ label: label, x: x, y: y }); renderAuthorPins(); }
+        closeAuthorPrompt();
+      };
+      ok.onclick = commit;
+      input.addEventListener('keydown', ev => {
+        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+        if (ev.key === 'Escape') closeAuthorPrompt();
+      });
+      prompt.appendChild(input);
+      prompt.appendChild(ok);
+      stage.appendChild(prompt);
+      input.focus();
+    }
+
+    function closeAuthorPrompt() {
+      const p = document.getElementById('pinPrompt');
+      if (p) p.remove();
+    }
+
+    function renderManageList() {
+      const wrap = document.getElementById('manageWrap');
+      const list = document.getElementById('manageList');
+      const diagrams = allCards.filter(c => c.type === 'diagram');
+      if (diagrams.length === 0) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+      list.innerHTML = '';
+      diagrams.forEach(d => {
+        const item = document.createElement('div');
+        item.className = 'manage-item';
+        item.innerHTML = '<div class="meta"><span class="t">' + escapeHtml(d.term) +
+          '</span><span class="c">' + escapeHtml(d.chapter || '') + ' · ' +
+          (d.pins ? d.pins.length : 0) + ' pins</span></div>';
+        const ops = document.createElement('div');
+        ops.className = 'ops';
+        const edit = document.createElement('button');
+        edit.textContent = 'Edit';
+        edit.onclick = () => openDiagramModal(d.term);
+        const del = document.createElement('button');
+        del.className = 'del';
+        del.textContent = 'Delete';
+        del.onclick = () => deleteDiagram(d.term);
+        ops.appendChild(edit); ops.appendChild(del);
+        item.appendChild(ops);
+        list.appendChild(item);
+      });
+    }
+
+    function deleteDiagram(term) {
+      if (!confirm('Delete "' + term + '"?')) return;
+      allCards = allCards.filter(c => !(c.type === 'diagram' && c.term === term));
+      mastered = mastered.filter(t => t !== term);
+      delete streaks[term];
+      saveCards();
+      saveState();
+      if (authorEditTerm === term) { authorEditTerm = null; authorPins = []; authorImgData = null; }
+      buildChapterFilter();
+      rebuildPile();
+      renderCard();
+      renderManageList();
+      renderAuthorImage();
+      renderAuthorPins();
+    }
+
+    function saveDiagram() {
+      const title = document.getElementById('diagTitleInput').value.trim();
+      const cat = document.getElementById('diagCatInput').value.trim() || 'Diagrams';
+      if (!title) { alert('Please enter a title.'); return; }
+      if (!authorImgData) { alert('Please upload an image first.'); return; }
+
+      const clash = allCards.some(c => c.term === title && c.term !== authorEditTerm);
+      if (clash) { alert('A card named "' + title + '" already exists. Choose a different title.'); return; }
+
+      const card = {
+        term: title, type: 'diagram', chapter: cat, img: authorImgData,
+        pins: authorPins.map(p => ({ label: p.label, x: p.x, y: p.y }))
+      };
+
+      const prev = allCards.slice();
+      const prevMastered = mastered.slice();
+      const prevStreaks = Object.assign({}, streaks);
+
+      if (authorEditTerm) {
+        const idx = allCards.findIndex(c => c.term === authorEditTerm && c.type === 'diagram');
+        if (idx >= 0) allCards[idx] = card; else allCards.push(card);
+        if (authorEditTerm !== title) {
+          mastered = mastered.map(t => t === authorEditTerm ? title : t);
+          if (streaks[authorEditTerm] != null) { streaks[title] = streaks[authorEditTerm]; delete streaks[authorEditTerm]; }
+        }
+      } else {
+        allCards.push(card);
+      }
+
+      try {
+        saveCards();
+        saveState();
+      } catch (err) {
+        allCards = prev; mastered = prevMastered; streaks = prevStreaks;
+        alert('Could not save — browser storage may be full (images are large). Try a smaller image or delete an unused diagram.');
+        return;
+      }
+
+      closeDiagramModal();
+      activeChapter = 'All';
+      buildChapterFilter();
+      rebuildPile();
+      renderCard();
+    }
+
     // ---- Events ----
     document.getElementById('flashcard').addEventListener('click', flipCard);
     document.getElementById('resetBtn').addEventListener('click', resetProgress);
@@ -1299,6 +2606,40 @@
       switchDeck(e.target.value);
     });
 
+    // ---- Diagram deck events ----
+    document.getElementById('addDiagramBtn').addEventListener('click', () => openDiagramModal());
+    document.getElementById('addDiagramEmptyBtn').addEventListener('click', () => openDiagramModal());
+    document.getElementById('closeDiagramModal').addEventListener('click', closeDiagramModal);
+    document.getElementById('cancelDiagram').addEventListener('click', closeDiagramModal);
+    document.getElementById('saveDiagram').addEventListener('click', saveDiagram);
+    document.getElementById('diagramModal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeDiagramModal();
+    });
+    document.getElementById('diagFileInput').addEventListener('change', e => {
+      handleDiagramFile(e.target.files[0]);
+    });
+    document.getElementById('authorImg').addEventListener('click', onAuthorImageClick);
+    document.getElementById('diagramModeToggle').querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => setDiagramMode(b.dataset.mode));
+    });
+
+    // ---- Lightbox events ----
+    document.getElementById('lbClose').addEventListener('click', closeLightbox);
+    document.getElementById('lbPrev').addEventListener('click', () => lbStep(-1));
+    document.getElementById('lbNext').addEventListener('click', () => lbStep(1));
+    document.getElementById('lbImg').addEventListener('click', () => {
+      document.getElementById('lbStage').classList.toggle('zoomed');
+    });
+    document.getElementById('lightbox').addEventListener('click', e => {
+      if (e.target === e.currentTarget || e.target.id === 'lbStage') closeLightbox();
+    });
+    document.addEventListener('keydown', e => {
+      if (!document.getElementById('lightbox').classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      else if (e.key === 'ArrowLeft') lbStep(-1);
+      else if (e.key === 'ArrowRight') lbStep(1);
+    });
+
     document.getElementById('masteredToggle').addEventListener('click', () => {
       const list = document.getElementById('masteredList');
       const arrow = document.getElementById('masteredArrow');
@@ -1308,11 +2649,83 @@
 
     document.addEventListener('keydown', e => {
       if (document.getElementById('editModal').classList.contains('open')) return;
+      if (document.getElementById('diagramModal').classList.contains('open')) return;
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (activeDeck === 'anatomy' || activeDeck === 'figures') return; // these use on-screen controls
       if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
       if (e.key === '1') answer('incorrect');
       if (e.key === '2') answer('almost');
       if (e.key === '3') answer('correct');
     });
+
+    // ---- Swipe gestures (Tinder-style) on flip cards ----
+    //  right = correct, left = incorrect, up = almost
+    (function setupSwipe() {
+      const container = document.getElementById('cardContainer');
+      const threshold = 70;
+      let startX = 0, startY = 0, dragging = false, moved = false, pid = null;
+
+      function onDown(e) {
+        if (activeDeck === 'anatomy') return;
+        if (pile.length === 0) return;
+        if (container.style.display === 'none') return;
+        if (e.button != null && e.button !== 0) return;
+        dragging = true; moved = false; pid = e.pointerId;
+        startX = e.clientX; startY = e.clientY;
+        container.style.transition = 'none';
+      }
+
+      function onMove(e) {
+        if (!dragging || e.pointerId !== pid) return;
+        const dx = e.clientX - startX, dy = e.clientY - startY;
+        if (!moved && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+          moved = true;
+          try { container.setPointerCapture(pid); } catch (_) {}
+        }
+        if (!moved) return;
+        container.style.transform = 'translate(' + dx + 'px,' + dy + 'px) rotate(' + (dx * 0.05) + 'deg)';
+        container.style.opacity = String(1 - Math.min(Math.max(Math.abs(dx), -dy) / 320, 0.55));
+      }
+
+      function onUp(e) {
+        if (!dragging || e.pointerId !== pid) return;
+        dragging = false;
+        try { container.releasePointerCapture(pid); } catch (_) {}
+        const dx = e.clientX - startX, dy = e.clientY - startY;
+        if (Math.abs(dx) >= threshold && Math.abs(dx) >= Math.abs(dy)) {
+          swipeOut(dx > 0 ? 'right' : 'left', dx > 0 ? 'correct' : 'incorrect');
+        } else if (-dy >= threshold && Math.abs(dy) > Math.abs(dx)) {
+          swipeOut('up', 'almost');
+        } else {
+          container.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+          container.style.transform = '';
+          container.style.opacity = '';
+        }
+      }
+
+      function swipeOut(dir, type) {
+        if (moved) justSwiped = true;
+        const tx = dir === 'right' ? '130%' : dir === 'left' ? '-130%' : '0';
+        const ty = dir === 'up' ? '-130%' : '0';
+        const rot = dir === 'right' ? 18 : dir === 'left' ? -18 : 0;
+        container.style.transition = 'transform 0.22s ease, opacity 0.22s ease';
+        container.style.transform = 'translate(' + tx + ',' + ty + ') rotate(' + rot + 'deg)';
+        container.style.opacity = '0';
+        setTimeout(() => {
+          container.style.transition = 'none';
+          container.style.transform = '';
+          container.style.opacity = '';
+          answer(type);
+          setTimeout(() => { container.style.transition = ''; }, 0);
+        }, 220);
+      }
+
+      container.addEventListener('pointerdown', onDown);
+      container.addEventListener('pointermove', onMove);
+      container.addEventListener('pointerup', onUp);
+      container.addEventListener('pointercancel', onUp);
+    })();
 
     // ---- Go ----
     init('language');
