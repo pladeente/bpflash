@@ -814,6 +814,8 @@
     .type-row input.correct { border-color: var(--correct); }
     .type-row input.incorrect { border-color: var(--incorrect); }
     .type-row .answer { font-size: 12px; color: var(--correct); font-weight: 600; min-width: 0; }
+    .type-row .answer.ok { color: var(--correct); }
+    .type-row .answer.miss { color: var(--text-muted); font-weight: 500; }
 
     .legend { display: flex; flex-direction: column; gap: 6px; }
     .legend-item {
@@ -1131,6 +1133,7 @@
         </div>
         <div class="mode-toggle" id="diagramModeToggle">
           <button data-mode="study">Study</button>
+          <button data-mode="recall">Quiz</button>
           <button data-mode="match">Match</button>
           <button data-mode="type">Type</button>
         </div>
@@ -1294,6 +1297,7 @@
     let studyRevealed = false;            // study mode: labels shown or hidden
     let quizResult = null;                // { correct, total } after grading
     let quizBank = null;                  // shuffled label list for match mode
+    let recallResults = null;             // recall (quiz) mode grading result
     let justSwiped = false;               // suppress flip after a swipe gesture
     const ANATOMY_CATEGORIES = ['Synapse', 'Cells & Glia', 'Brain Overall'];
     // Authoring scratch state
@@ -1413,21 +1417,21 @@
     //  Used by both the Figures gallery and the Anatomy deck.
     // =====================================================
     const FIGURES = [
-      { file: 'f-1-10.png', title: 'Fig 1.10 — Motor Neuron', cat: 'Cells & Glia',
+      { file: 'f-1-10.png', blank: 'f-1-10-blank.png', title: 'Fig 1.10 — Motor Neuron', cat: 'Cells & Glia',
         labels: ['Dendrite', 'Soma (cell body)', 'Nucleus', 'Axon hillock', 'Myelin sheath', 'Axon', 'Dendritic spines', 'Presynaptic terminals'] },
-      { file: 'f-1-15.png', title: 'Fig 1.15 — Glia Cells', cat: 'Cells & Glia',
+      { file: 'f-1-15.png', blank: 'f-1-15-blank.png', title: 'Fig 1.15 — Glia Cells', cat: 'Cells & Glia',
         labels: ['Astrocyte', 'Oligodendrocyte', 'Schwann cell', 'Microglia', 'Radial glia', 'Myelin sheath', 'Capillary', 'Migrating neuron'] },
-      { file: 'f-2-10.png', title: 'Fig 2.10 — Transmission at a Synapse', cat: 'Synapse',
+      { file: 'f-2-10.png', blank: 'f-2-10-blank.png', title: 'Fig 2.10 — Transmission at a Synapse', cat: 'Synapse',
         labels: ['Vesicle', 'Presynaptic terminal', 'Synaptic cleft', 'Postsynaptic neuron', 'Neurotransmitter', 'Receptor', 'Transporter protein', 'Glia cell'] },
-      { file: 'f-3-2.png', title: 'Fig 3.2 — Anatomical Directions & Planes', cat: 'Brain Overall',
+      { file: 'f-3-2.png', blank: 'f-3-2-blank.png', title: 'Fig 3.2 — Anatomical Directions & Planes', cat: 'Brain Overall',
         labels: ['Sagittal plane', 'Coronal plane', 'Horizontal plane', 'Dorsal', 'Ventral', 'Anterior', 'Posterior', 'Medial', 'Lateral'] },
-      { file: 'f-3-8.png', title: 'Fig 3.8 — The Human Brainstem', cat: 'Brain Overall',
+      { file: 'f-3-8.png', blank: 'f-3-8-blank.png', title: 'Fig 3.8 — The Human Brainstem', cat: 'Brain Overall',
         labels: ['Thalamus', 'Pineal gland', 'Superior colliculus', 'Inferior colliculus', 'Tectum', 'Tegmentum', 'Pons', 'Medulla', 'Midbrain'] },
-      { file: 'f-3-12.png', title: 'Fig 3.12 — Subcortical Forebrain', cat: 'Brain Overall',
+      { file: 'f-3-12.png', blank: 'f-3-12-blank.png', title: 'Fig 3.12 — Subcortical Forebrain', cat: 'Brain Overall',
         labels: ['Cingulate gyrus', 'Thalamus', 'Hypothalamus', 'Mamillary body', 'Hippocampus', 'Amygdala', 'Olfactory bulb'] },
-      { file: 'f-3-17.png', title: 'Fig 3.17 — The Cerebral Ventricles', cat: 'Brain Overall',
+      { file: 'f-3-17.png', blank: 'f-3-17-blank.png', title: 'Fig 3.17 — The Cerebral Ventricles', cat: 'Brain Overall',
         labels: ['Lateral ventricles', 'Third ventricle', 'Fourth ventricle', 'Cerebral aqueduct', 'Central canal of spinal cord', 'Thalamus'] },
-      { file: 'f-3-22.png', title: 'Fig 3.22 — Cerebral Cortex (Lobes)', cat: 'Brain Overall',
+      { file: 'f-3-22.png', blank: 'f-3-22-blank.png', title: 'Fig 3.22 — Cerebral Cortex (Lobes)', cat: 'Brain Overall',
         labels: ['Frontal lobe', 'Parietal lobe', 'Temporal lobe', 'Occipital lobe', 'Central sulcus', 'Precentral gyrus (motor cortex)', 'Postcentral gyrus (somatosensory cortex)'] }
     ];
 
@@ -1440,8 +1444,28 @@
     // =====================================================
     const DEFAULT_ANATOMY = FIGURES.map(f => ({
       term: f.title, type: 'diagram', chapter: f.cat,
-      img: f.blank || f.file, labels: f.labels, pins: f.pins || []
+      img: f.file, blankImg: f.blank || null, labels: f.labels, pins: f.pins || []
     }));
+
+    // Refresh static figure content (image, blank, labels) on stored anatomy
+    // cards so new fields reach returning visitors, while keeping user-added
+    // diagrams and any pins they placed on the seed figures.
+    function mergeAnatomy(stored, seed) {
+      const bySeed = {};
+      seed.forEach(s => { bySeed[s.term] = s; });
+      const seen = {};
+      const merged = stored.map(c => {
+        const s = bySeed[c.term];
+        seen[c.term] = true;
+        if (!s) return c;
+        return Object.assign({}, c, {
+          img: s.img, blankImg: s.blankImg, labels: s.labels, chapter: s.chapter,
+          pins: (c.pins && c.pins.length) ? c.pins : s.pins
+        });
+      });
+      seed.forEach(s => { if (!seen[s.term]) merged.push(s); });
+      return merged;
+    }
 
     // ---- Chapter short names for morphograph categories ----
     const MORPH_CHAPTER_NAMES = {
@@ -1509,6 +1533,8 @@
           const hasNewFormat = parsed.some(c => c.parts);
           termCards = hasNewFormat ? parsed : [...defaultCards];
           if (!hasNewFormat) localStorage.removeItem(cardsKey());
+        } else if (activeDeck === 'anatomy') {
+          termCards = mergeAnatomy(parsed, defaultCards);
         } else {
           termCards = parsed;
         }
@@ -1735,19 +1761,25 @@
       quizChecked = false;
       studyRevealed = false;
       quizResult = null;
+      recallResults = null;
       quizBank = shuffledLabels(current.pins || []);
 
       document.getElementById('diagramCat').textContent = current.chapter || '';
       document.getElementById('diagramTitle').textContent = current.term;
-      document.getElementById('diagramImg').src = current.img || '';
 
       const hasPins = !!(current.pins && current.pins.length);
-      if (!hasPins && diagramMode !== 'study') diagramMode = 'study';
+      const hasRecall = !!(current.blankImg && current.labels && current.labels.length);
+      if (diagramMode === 'recall' && !hasRecall) diagramMode = 'study';
+      if ((diagramMode === 'match' || diagramMode === 'type') && !hasPins) diagramMode = 'study';
       document.querySelectorAll('#diagramModeToggle button').forEach(b => {
         const m = b.dataset.mode;
-        b.style.display = (m === 'study' || hasPins) ? '' : 'none';
+        const show = m === 'study' || (m === 'recall' && hasRecall) || ((m === 'match' || m === 'type') && hasPins);
+        b.style.display = show ? '' : 'none';
         b.classList.toggle('active', m === diagramMode);
       });
+
+      const src = (diagramMode === 'recall' && current.blankImg) ? current.blankImg : (current.img || '');
+      document.getElementById('diagramImg').src = src;
 
       renderDiagramMode(current);
     }
@@ -1757,6 +1789,7 @@
       document.getElementById('quizScore').style.display = 'none';
       if (diagramMode === 'study') renderStudyMode(current, pins);
       else if (diagramMode === 'match') renderMatchMode(current, pins);
+      else if (diagramMode === 'recall') renderRecallMode(current);
       else renderTypeMode(current, pins);
     }
 
@@ -1941,6 +1974,123 @@
     function isTypeCorrect(i, p) { return normLabel(quizAssign[i] || '') === normLabel(p.label); }
     function normLabel(s) {
       return String(s).toLowerCase().trim().replace(/\s+/g, ' ').replace(/[.,;:!?’'"()]/g, '');
+    }
+
+    // ---- Recall (Quiz) mode: blank image + free-recall typing, graded as a
+    //      set against the figure's labels (order-independent). ----
+    function renderRecallMode(current) {
+      document.getElementById('diagramPins').innerHTML = '';
+      const labels = current.labels || [];
+      const panel = document.getElementById('diagramPanel');
+      let html = '<div class="panel-hint">Name every labeled structure (order doesn’t matter), then Check. Minor typos and synonyms are accepted.</div><div class="type-rows">';
+      labels.forEach((lbl, i) => {
+        const r = recallResults ? recallResults.rows[i] : null;
+        const val = quizAssign[i] != null ? escapeAttr(quizAssign[i]) : '';
+        let cls = '', extra = '';
+        if (r) {
+          if (r.status === 'correct') { cls = 'correct'; extra = '<span class="answer ok">✓ ' + escapeHtml(r.matched) + '</span>'; }
+          else { cls = 'incorrect'; extra = '<span class="answer miss">' + (r.status === 'empty' ? 'left blank' : 'not a match') + '</span>'; }
+        }
+        html += '<div class="type-row"><span class="num">' + (i + 1) + '</span>' +
+          '<input type="text" data-idx="' + i + '" value="' + val + '" class="' + cls + '" ' +
+          (recallResults ? 'disabled ' : '') + 'autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="structure name">' +
+          extra + '</div>';
+      });
+      html += '</div>';
+      if (recallResults && recallResults.missed.length) {
+        html += '<div class="panel-hint" style="margin-top:12px">Missed — review these:</div><div class="legend">';
+        recallResults.missed.forEach(l => {
+          html += '<div class="legend-item"><span class="num">•</span><span>' + escapeHtml(l) + '</span></div>';
+        });
+        html += '</div>';
+      }
+      panel.innerHTML = html;
+      panel.querySelectorAll('.type-row input').forEach(inp => {
+        inp.oninput = () => { quizAssign[+inp.dataset.idx] = inp.value; };
+      });
+
+      const actions = document.getElementById('diagramActions');
+      actions.innerHTML = '';
+      if (!recallResults) {
+        actions.appendChild(makeBtn('Check Answers', 'btn btn-accent', () => gradeRecall(current)));
+      } else {
+        actions.appendChild(makeBtn('Try Again', 'btn', () => {
+          quizAssign = {}; recallResults = null; renderDiagramMode(current);
+        }));
+        actions.appendChild(makeBtn('Next →', 'btn btn-accent', () => {
+          const t = recallResults.total ? recallResults.correct / recallResults.total : 0;
+          answer(t === 1 ? 'correct' : (t >= 0.5 ? 'almost' : 'incorrect'));
+        }));
+      }
+    }
+
+    function gradeRecall(current) {
+      const labels = current.labels || [];
+      const remaining = labels.map(l => ({ label: l, accepts: labelAccepts(l), used: false }));
+      const rows = labels.map((_, i) => {
+        const raw = (quizAssign[i] || '').trim();
+        if (!raw) return { status: 'empty' };
+        const n = normLabel(raw);
+        let hit = remaining.find(e => !e.used && e.accepts.indexOf(n) !== -1);
+        if (!hit) {
+          let best = null, bestD = Infinity;
+          remaining.forEach(e => {
+            if (e.used) return;
+            e.accepts.forEach(a => { if (closeEnough(n, a)) { const d = lev(n, a); if (d < bestD) { bestD = d; best = e; } } });
+          });
+          hit = best;
+        }
+        if (hit) { hit.used = true; return { status: 'correct', matched: hit.label }; }
+        return { status: 'wrong' };
+      });
+      const correct = rows.filter(r => r.status === 'correct').length;
+      const missed = remaining.filter(e => !e.used).map(e => e.label);
+      recallResults = { rows: rows, correct: correct, total: labels.length, missed: missed };
+      renderDiagramMode(current);
+      const score = document.getElementById('quizScore');
+      score.style.display = 'block';
+      const pct = labels.length ? correct / labels.length : 0;
+      score.className = 'quiz-score ' + (pct === 1 ? 'good' : (pct >= 0.5 ? 'mid' : 'bad'));
+      score.textContent = correct + ' / ' + labels.length + ' correct';
+    }
+
+    // Acceptable normalized forms for a label, incl. the part before a
+    // parenthetical and the part inside it (e.g. "Soma (cell body)" accepts
+    // "soma", "cell body", or the whole thing).
+    function labelAccepts(label) {
+      const forms = {};
+      const add = s => { const n = normLabel(s); if (n) forms[n] = true; };
+      add(label);
+      const m = String(label).match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+      if (m) { add(m[1]); add(m[2]); }
+      return Object.keys(forms);
+    }
+
+    // Typo tolerance: stricter for short strings to avoid conflating
+    // distinct labels.
+    function closeEnough(a, b) {
+      if (a === b) return true;
+      const len = Math.max(a.length, b.length);
+      if (len <= 3) return false;
+      const d = lev(a, b);
+      if (len <= 7) return d <= 1;
+      return d <= Math.min(3, Math.floor(len / 5));
+    }
+
+    function lev(a, b) {
+      const m = a.length, n = b.length;
+      if (!m) return n; if (!n) return m;
+      let prev = new Array(n + 1), cur = new Array(n + 1);
+      for (let j = 0; j <= n; j++) prev[j] = j;
+      for (let i = 1; i <= m; i++) {
+        cur[0] = i;
+        for (let j = 1; j <= n; j++) {
+          const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+          cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+        }
+        const t = prev; prev = cur; cur = t;
+      }
+      return prev[n];
     }
     function nextUnassignedPin(pins, from) {
       for (let k = 1; k <= pins.length; k++) {
