@@ -214,6 +214,7 @@
     .card-container {
       perspective: 1200px;
       margin-bottom: 20px;
+      touch-action: none;
     }
     .card {
       width: 100%;
@@ -2252,37 +2253,36 @@
     //  right = correct, left = incorrect, up = almost
     (function setupSwipe() {
       const container = document.getElementById('cardContainer');
-      const threshold = 80;
-      let startX = 0, startY = 0, dragging = false, moved = false;
-
-      function getPoint(e) { return e.touches && e.touches[0] ? e.touches[0] : (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : e); }
+      const threshold = 70;
+      let startX = 0, startY = 0, dragging = false, moved = false, pid = null;
 
       function onDown(e) {
         if (activeDeck === 'anatomy') return;
         if (pile.length === 0) return;
-        if (document.getElementById('cardContainer').style.display === 'none') return;
-        dragging = true; moved = false;
-        const pt = getPoint(e);
-        startX = pt.clientX; startY = pt.clientY;
+        if (container.style.display === 'none') return;
+        if (e.button != null && e.button !== 0) return;
+        dragging = true; moved = false; pid = e.pointerId;
+        startX = e.clientX; startY = e.clientY;
         container.style.transition = 'none';
       }
 
       function onMove(e) {
-        if (!dragging) return;
-        const pt = getPoint(e);
-        const dx = pt.clientX - startX, dy = pt.clientY - startY;
-        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
+        if (!dragging || e.pointerId !== pid) return;
+        const dx = e.clientX - startX, dy = e.clientY - startY;
+        if (!moved && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+          moved = true;
+          try { container.setPointerCapture(pid); } catch (_) {}
+        }
+        if (!moved) return;
         container.style.transform = 'translate(' + dx + 'px,' + dy + 'px) rotate(' + (dx * 0.05) + 'deg)';
-        const o = 1 - Math.min(Math.max(Math.abs(dx), -dy) / 320, 0.55);
-        container.style.opacity = String(o);
-        if (moved && e.cancelable) e.preventDefault();
+        container.style.opacity = String(1 - Math.min(Math.max(Math.abs(dx), -dy) / 320, 0.55));
       }
 
       function onUp(e) {
-        if (!dragging) return;
+        if (!dragging || e.pointerId !== pid) return;
         dragging = false;
-        const pt = getPoint(e);
-        const dx = pt.clientX - startX, dy = pt.clientY - startY;
+        try { container.releasePointerCapture(pid); } catch (_) {}
+        const dx = e.clientX - startX, dy = e.clientY - startY;
         if (Math.abs(dx) >= threshold && Math.abs(dx) >= Math.abs(dy)) {
           swipeOut(dx > 0 ? 'right' : 'left', dx > 0 ? 'correct' : 'incorrect');
         } else if (-dy >= threshold && Math.abs(dy) > Math.abs(dx)) {
@@ -2307,16 +2307,14 @@
           container.style.transform = '';
           container.style.opacity = '';
           answer(type);
-          requestAnimationFrame(() => { container.style.transition = ''; });
+          setTimeout(() => { container.style.transition = ''; }, 0);
         }, 220);
       }
 
-      container.addEventListener('mousedown', onDown);
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onUp);
-      container.addEventListener('touchstart', onDown, { passive: true });
-      container.addEventListener('touchmove', onMove, { passive: false });
-      container.addEventListener('touchend', onUp);
+      container.addEventListener('pointerdown', onDown);
+      container.addEventListener('pointermove', onMove);
+      container.addEventListener('pointerup', onUp);
+      container.addEventListener('pointercancel', onUp);
     })();
 
     // ---- Go ----
