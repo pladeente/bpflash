@@ -790,6 +790,37 @@
     .word-chip:hover { border-color: var(--accent); }
     .word-chip:active { transform: scale(0.95); }
     .word-chip.used { opacity: 0.35; pointer-events: none; text-decoration: line-through; }
+    .word-chip.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    .drag-chip { touch-action: none; -webkit-user-select: none; user-select: none; }
+
+    /* drag-and-drop quiz */
+    .pin.drop-slot { cursor: pointer; }
+    .pin.drop-slot .slot-dot {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 1px 6px rgba(0,0,0,0.5);
+      flex-shrink: 0; line-height: 1;
+    }
+    .pin.drop-slot.drop-hover .slot-dot { box-shadow: 0 0 0 4px var(--accent-glow), 0 1px 6px rgba(0,0,0,0.5); }
+    .pin.drop-slot.slot-correct .slot-dot { background: var(--correct); }
+    .pin.drop-slot.slot-incorrect .slot-dot { background: var(--incorrect); }
+    .slot-chip {
+      position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 3px;
+      font-size: 11px; font-weight: 600; color: var(--text);
+      background: rgba(15,17,23,0.92); padding: 3px 7px; border-radius: 6px;
+      white-space: nowrap; border: 1px solid var(--accent); line-height: 1.2; max-width: 150px;
+      overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+    }
+    .pin.slot-up .slot-chip { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 3px; }
+    .slot-chip.correct { color: var(--correct); border-color: rgba(74,222,128,0.5); }
+    .slot-chip.incorrect { color: var(--incorrect); border-color: rgba(248,113,113,0.5); }
+    .drag-clone {
+      position: fixed; z-index: 9999; pointer-events: none;
+      transform: translate(-50%, -50%);
+      padding: 8px 14px; border-radius: 20px; background: var(--accent); color: #fff;
+      font-size: 13px; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    }
 
     .type-rows { display: flex; flex-direction: column; gap: 8px; }
     .type-row { display: flex; align-items: center; gap: 10px; }
@@ -1134,8 +1165,6 @@
         <div class="mode-toggle" id="diagramModeToggle">
           <button data-mode="study">Study</button>
           <button data-mode="recall">Quiz</button>
-          <button data-mode="match">Match</button>
-          <button data-mode="type">Type</button>
         </div>
       </div>
       <div class="diagram-stage" id="diagramStage">
@@ -1290,7 +1319,8 @@
     let activeDeck = 'language';
 
     // ---- Anatomy / diagram deck state ----
-    let diagramMode = 'study';            // 'study' | 'match' | 'type'
+    let diagramMode = 'recall';           // 'study' | 'recall' (Quiz: drag-drop or typing)
+    let dragSelected = null;              // label tapped in the word bank (tap-to-place fallback)
     let quizAssign = {};                  // pinIndex -> assigned label (match mode)
     let quizSelectedPin = null;           // currently selected pin index (match mode)
     let quizChecked = false;              // whether current quiz has been graded
@@ -1418,19 +1448,53 @@
     // =====================================================
     const FIGURES = [
       { file: 'f-1-10.png', blank: 'f-1-10-blank.png', title: 'Fig 1.10 — Motor Neuron', cat: 'Cells & Glia',
-        labels: ['Dendrite', 'Soma (cell body)', 'Nucleus', 'Axon hillock', 'Myelin sheath', 'Axon', 'Dendritic spines', 'Presynaptic terminals'] },
+        labels: ['Dendrite', 'Soma (cell body)', 'Nucleus', 'Axon hillock', 'Myelin sheath', 'Axon', 'Dendritic spines', 'Presynaptic terminals'],
+        pins: [
+          { label: 'Dendrite', x: 0.192, y: 0.241 }, { label: 'Myelin sheath', x: 0.551, y: 0.486 },
+          { label: 'Nucleus', x: 0.398, y: 0.487 }, { label: 'Presynaptic terminals', x: 0.723, y: 0.573 },
+          { label: 'Axon', x: 0.622, y: 0.604 }, { label: 'Axon hillock', x: 0.423, y: 0.681 },
+          { label: 'Muscle fiber', x: 0.705, y: 0.819 }, { label: 'Dendritic spines', x: 0.465, y: 0.869 },
+          { label: 'Soma (cell body)', x: 0.279, y: 0.880 }
+        ] },
       { file: 'f-1-15.png', blank: 'f-1-15-blank.png', title: 'Fig 1.15 — Glia Cells', cat: 'Cells & Glia',
         labels: ['Astrocyte', 'Oligodendrocyte', 'Schwann cell', 'Microglia', 'Radial glia', 'Myelin sheath', 'Capillary', 'Migrating neuron'] },
       { file: 'f-2-10.png', blank: 'f-2-10-blank.png', title: 'Fig 2.10 — Transmission at a Synapse', cat: 'Synapse',
         labels: ['Vesicle', 'Presynaptic terminal', 'Synaptic cleft', 'Postsynaptic neuron', 'Neurotransmitter', 'Receptor', 'Transporter protein', 'Glia cell'] },
       { file: 'f-3-2.png', blank: 'f-3-2-blank.png', title: 'Fig 3.2 — Anatomical Directions & Planes', cat: 'Brain Overall',
-        labels: ['Sagittal plane', 'Coronal plane', 'Horizontal plane', 'Dorsal', 'Ventral', 'Anterior', 'Posterior', 'Medial', 'Lateral'] },
+        labels: ['Sagittal plane', 'Coronal plane', 'Horizontal plane', 'Dorsal', 'Ventral', 'Anterior', 'Posterior', 'Medial', 'Lateral'],
+        pins: [
+          { label: 'Coronal plane', x: 0.718, y: 0.137 }, { label: 'Sagittal plane', x: 0.529, y: 0.186 },
+          { label: 'Dorsal (for brain)', x: 0.943, y: 0.209 }, { label: 'Horizontal plane', x: 0.540, y: 0.348 },
+          { label: 'Ventral (for brain)', x: 0.941, y: 0.464 },
+          { label: 'Ventral (for brainstem and spinal cord)', x: 0.649, y: 0.535 },
+          { label: 'Dorsal (for brainstem and spinal cord)', x: 0.832, y: 0.573 }, { label: 'Medial', x: 0.584, y: 0.633 },
+          { label: 'Horizontal plane', x: 0.168, y: 0.965 }, { label: 'Sagittal plane', x: 0.493, y: 0.965 },
+          { label: 'Coronal plane', x: 0.785, y: 0.965 }
+        ] },
       { file: 'f-3-8.png', blank: 'f-3-8-blank.png', title: 'Fig 3.8 — The Human Brainstem', cat: 'Brain Overall',
-        labels: ['Thalamus', 'Pineal gland', 'Superior colliculus', 'Inferior colliculus', 'Tectum', 'Tegmentum', 'Pons', 'Medulla', 'Midbrain'] },
+        labels: ['Thalamus', 'Pineal gland', 'Superior colliculus', 'Inferior colliculus', 'Tectum', 'Tegmentum', 'Pons', 'Medulla', 'Midbrain'],
+        pins: [
+          { label: 'Pineal gland', x: 0.882, y: 0.254 }, { label: 'Thalamus', x: 0.094, y: 0.283 },
+          { label: 'Superior colliculus', x: 0.088, y: 0.355 }, { label: 'Inferior colliculus', x: 0.088, y: 0.427 },
+          { label: 'Midbrain', x: 0.826, y: 0.425 }, { label: 'Tectum', x: 0.090, y: 0.494 },
+          { label: 'Tegmentum', x: 0.165, y: 0.553 }, { label: 'Pons', x: 0.137, y: 0.621 },
+          { label: 'Medulla', x: 0.269, y: 0.781 }
+        ] },
       { file: 'f-3-12.png', blank: 'f-3-12-blank.png', title: 'Fig 3.12 — Subcortical Forebrain', cat: 'Brain Overall',
-        labels: ['Cingulate gyrus', 'Thalamus', 'Hypothalamus', 'Mamillary body', 'Hippocampus', 'Amygdala', 'Olfactory bulb'] },
+        labels: ['Cingulate gyrus', 'Thalamus', 'Hypothalamus', 'Mamillary body', 'Hippocampus', 'Amygdala', 'Olfactory bulb'],
+        pins: [
+          { label: 'Cingulate gyrus', x: 0.205, y: 0.177 }, { label: 'Thalamus', x: 0.205, y: 0.335 },
+          { label: 'Hypothalamus', x: 0.203, y: 0.471 }, { label: 'Mamillary body', x: 0.205, y: 0.544 },
+          { label: 'Hippocampus', x: 0.205, y: 0.730 }, { label: 'Amygdala', x: 0.205, y: 0.829 },
+          { label: 'Olfactory bulb', x: 0.196, y: 0.962 }
+        ] },
       { file: 'f-3-17.png', blank: 'f-3-17-blank.png', title: 'Fig 3.17 — The Cerebral Ventricles', cat: 'Brain Overall',
-        labels: ['Lateral ventricles', 'Third ventricle', 'Fourth ventricle', 'Cerebral aqueduct', 'Central canal of spinal cord', 'Thalamus'] },
+        labels: ['Lateral ventricles', 'Third ventricle', 'Fourth ventricle', 'Cerebral aqueduct', 'Central canal of spinal cord', 'Thalamus'],
+        pins: [
+          { label: 'Lateral ventricles', x: 0.092, y: 0.250 }, { label: 'Third ventricle', x: 0.064, y: 0.377 },
+          { label: 'Lateral ventricles', x: 0.936, y: 0.536 }, { label: 'Thalamus', x: 0.469, y: 0.710 },
+          { label: 'Cerebral aqueduct', x: 0.121, y: 0.855 }, { label: 'Fourth ventricle', x: 0.465, y: 0.821 }
+        ] },
       { file: 'f-3-22.png', blank: 'f-3-22-blank.png', title: 'Fig 3.22 — Cerebral Cortex (Lobes)', cat: 'Brain Overall',
         labels: ['Frontal lobe', 'Parietal lobe', 'Temporal lobe', 'Occipital lobe', 'Central sulcus', 'Precentral gyrus (motor cortex)', 'Postcentral gyrus (somatosensory cortex)'] }
     ];
@@ -1762,18 +1826,18 @@
       studyRevealed = false;
       quizResult = null;
       recallResults = null;
-      quizBank = shuffledLabels(current.pins || []);
+      dragSelected = null;
+      quizBank = null;
 
       document.getElementById('diagramCat').textContent = current.chapter || '';
       document.getElementById('diagramTitle').textContent = current.term;
 
       const hasPins = !!(current.pins && current.pins.length);
-      const hasRecall = !!(current.blankImg && current.labels && current.labels.length);
-      if (diagramMode === 'recall' && !hasRecall) diagramMode = 'study';
-      if ((diagramMode === 'match' || diagramMode === 'type') && !hasPins) diagramMode = 'study';
+      const hasQuiz = hasPins || !!(current.blankImg && current.labels && current.labels.length);
+      if (diagramMode === 'recall' && !hasQuiz) diagramMode = 'study';
       document.querySelectorAll('#diagramModeToggle button').forEach(b => {
         const m = b.dataset.mode;
-        const show = m === 'study' || (m === 'recall' && hasRecall) || ((m === 'match' || m === 'type') && hasPins);
+        const show = m === 'study' || (m === 'recall' && hasQuiz);
         b.style.display = show ? '' : 'none';
         b.classList.toggle('active', m === diagramMode);
       });
@@ -1789,7 +1853,10 @@
       document.getElementById('quizScore').style.display = 'none';
       if (diagramMode === 'study') renderStudyMode(current, pins);
       else if (diagramMode === 'match') renderMatchMode(current, pins);
-      else if (diagramMode === 'recall') renderRecallMode(current);
+      else if (diagramMode === 'recall') {
+        if (pins.length) renderDragMode(current);
+        else renderRecallMode(current);
+      }
       else renderTypeMode(current, pins);
     }
 
@@ -2091,6 +2158,159 @@
         const t = prev; prev = cur; cur = t;
       }
       return prev[n];
+    }
+
+    // =====================================================
+    //  DRAG-AND-DROP QUIZ (label the blank diagram, then Submit)
+    // =====================================================
+    function renderDragMode(current) {
+      const pins = current.pins || [];
+      if (!quizBank || quizBank._for !== current.term) {
+        quizBank = pins.map(p => p.label);
+        shuffleArray(quizBank);
+        quizBank._for = current.term;
+      }
+      buildPins(pins, (pin, p, i) => {
+        pin.classList.add('drop-slot');
+        if (p.y > 0.82) pin.classList.add('slot-up');
+        pin.dataset.slot = i;
+        const dot = document.createElement('div');
+        dot.className = 'slot-dot';
+        dot.textContent = i + 1;
+        pin.appendChild(dot);
+        if (quizChecked) pin.classList.add(quizAssign[i] === p.label ? 'slot-correct' : 'slot-incorrect');
+        if (quizChecked || quizAssign[i] != null) {
+          const chip = document.createElement('div');
+          chip.className = 'slot-chip';
+          if (quizChecked) chip.classList.add(quizAssign[i] === p.label ? 'correct' : 'incorrect');
+          chip.textContent = quizChecked ? p.label : quizAssign[i];
+          pin.appendChild(chip);
+        }
+        if (!quizChecked) {
+          pin.onclick = () => {
+            if (dragSelected != null) { assignSlot(i, dragSelected); dragSelected = null; renderDiagramMode(current); }
+            else if (quizAssign[i] != null) { delete quizAssign[i]; renderDiagramMode(current); }
+          };
+        }
+      });
+
+      const used = {};
+      Object.keys(quizAssign).forEach(k => { const l = quizAssign[k]; used[l] = (used[l] || 0) + 1; });
+      const panel = document.getElementById('diagramPanel');
+      const assignedCount = Object.keys(quizAssign).length;
+      let html = '<div class="panel-hint">' +
+        (quizChecked ? 'Tap a box to see the answer. Try Again to retry.'
+                     : 'Drag each label onto the correct box — or tap a label, then tap a box. Then press Submit.') +
+        '</div><div class="word-bank" id="dragBank">';
+      const shown = {};
+      quizBank.forEach(label => {
+        shown[label] = (shown[label] || 0) + 1;
+        const isUsed = shown[label] <= (used[label] || 0);
+        html += '<button class="word-chip drag-chip' + (isUsed ? ' used' : '') +
+          (dragSelected === label && !isUsed ? ' selected' : '') + '" data-label="' + escapeAttr(label) + '"' +
+          (quizChecked ? ' disabled' : '') + '>' + escapeHtml(label) + '</button>';
+      });
+      html += '</div>';
+      panel.innerHTML = html;
+      if (!quizChecked) wireDragChips(current);
+
+      const actions = document.getElementById('diagramActions');
+      actions.innerHTML = '';
+      if (!quizChecked) {
+        actions.appendChild(makeBtn('Submit', 'btn btn-accent', () => gradeDrag(current)));
+        if (assignedCount) actions.appendChild(makeBtn('Clear', 'btn', () => {
+          quizAssign = {}; dragSelected = null; renderDiagramMode(current);
+        }));
+      } else {
+        actions.appendChild(makeBtn('Try Again', 'btn', () => {
+          quizAssign = {}; quizChecked = false; quizResult = null; dragSelected = null; renderDiagramMode(current);
+        }));
+        actions.appendChild(makeBtn('Next →', 'btn btn-accent', () => {
+          const t = quizResult && quizResult.total ? quizResult.correct / quizResult.total : 0;
+          answer(t === 1 ? 'correct' : (t >= 0.5 ? 'almost' : 'incorrect'));
+        }));
+      }
+    }
+
+    function assignSlot(i, label) { quizAssign[i] = label; }
+
+    function wireDragChips(current) {
+      document.querySelectorAll('#dragBank .drag-chip:not(.used)').forEach(chip => {
+        chip.addEventListener('pointerdown', e => startChipDrag(e, chip, current));
+      });
+    }
+
+    function startChipDrag(e, chip, current) {
+      e.preventDefault();
+      const label = chip.dataset.label;
+      const startX = e.clientX, startY = e.clientY;
+      let moved = false, clone = null, hoverEl = null;
+      function move(ev) {
+        const dx = ev.clientX - startX, dy = ev.clientY - startY;
+        if (!moved && (dx * dx + dy * dy) > 36) { moved = true; clone = makeDragClone(chip); }
+        if (clone) {
+          clone.style.left = ev.clientX + 'px';
+          clone.style.top = ev.clientY + 'px';
+          const slot = slotAtPoint(ev.clientX, ev.clientY);
+          const el = slot == null ? null : document.querySelector('#diagramPins .drop-slot[data-slot="' + slot + '"]');
+          if (el !== hoverEl) {
+            if (hoverEl) hoverEl.classList.remove('drop-hover');
+            if (el) el.classList.add('drop-hover');
+            hoverEl = el;
+          }
+        }
+      }
+      function up(ev) {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        if (clone) clone.remove();
+        if (hoverEl) hoverEl.classList.remove('drop-hover');
+        if (moved) {
+          const slot = slotAtPoint(ev.clientX, ev.clientY);
+          if (slot != null) { assignSlot(slot, label); dragSelected = null; renderDiagramMode(current); }
+        } else {
+          dragSelected = (dragSelected === label ? null : label);
+          renderDiagramMode(current);
+        }
+      }
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+    }
+
+    function makeDragClone(chip) {
+      const c = document.createElement('div');
+      c.className = 'drag-clone';
+      c.textContent = chip.textContent;
+      document.body.appendChild(c);
+      return c;
+    }
+
+    function slotAtPoint(x, y) {
+      let best = null, bestD = Infinity;
+      document.querySelectorAll('#diagramPins .drop-slot').forEach(el => {
+        const r = el.getBoundingClientRect();
+        const pad = 16;
+        if (x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad) {
+          const cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
+          const d = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+          if (d < bestD) { bestD = d; best = +el.dataset.slot; }
+        }
+      });
+      return best;
+    }
+
+    function gradeDrag(current) {
+      const pins = current.pins || [];
+      quizChecked = true;
+      let correct = 0;
+      pins.forEach((p, i) => { if (quizAssign[i] === p.label) correct++; });
+      quizResult = { correct: correct, total: pins.length };
+      renderDiagramMode(current);
+      const score = document.getElementById('quizScore');
+      score.style.display = 'block';
+      const pct = pins.length ? correct / pins.length : 0;
+      score.className = 'quiz-score ' + (pct === 1 ? 'good' : (pct >= 0.5 ? 'mid' : 'bad'));
+      score.textContent = correct + ' / ' + pins.length + ' correct';
     }
     function nextUnassignedPin(pins, from) {
       for (let k = 1; k <= pins.length; k++) {
